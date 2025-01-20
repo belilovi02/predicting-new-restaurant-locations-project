@@ -1,52 +1,32 @@
-Ovaj projekat omogućava razvoj aplikacije koja koristi geografske podatke 
-kako bi prikazala lokacije restorana u Bosni i Hercegovini, kao i predložene 
-lokacije za nove restorane, zasnovane na analizama podataka o trenutnoj raspodjeli restorana. 
-Aplikacija koristi TomTom API za pretragu podataka o restoranima u određenoj regiji i K-means algoritam 
-za grupisanje restorana i predlaganje novih lokacija.
+Aplikacija **"Restoran Lokator"** omogućuje korisnicima interaktivno mapiranje i analizu geografskih podataka s ciljem identificiranja optimalnih lokacija za nove restorane. Funkcionalnosti su implementirane kroz backend servis u Pythonu (koristeći Flask) i frontend temeljen na HTML-u, CSS-u i Leaflet.js biblioteci za prikaz mape.
 
-Detaljan opis:
-1. Frontend - HTML & JavaScript (Leaflet.js):
-HTML Struktura: Na početnoj stranici nalazi se jednostavan form s dva unosa
- (latitude i longitude) koja omogućavaju korisniku da unese geografske koordinate. 
- Korisnik može unijeti tačne koordinate bilo koje lokacije u Bosni i Hercegovini 
- i nakon toga pritisnuti dugme "Prikazi Restorane" kako bi pokrenuo pretragu.
-Map: Mapa je prikazana putem Leaflet.js biblioteke, koja omogućava interaktivne 
-mape na webu. Mapu pokreće osnovni sloj sa OpenStreetMap tileovima.
-Responzivni Dizajn: Kroz CSS je implementiran responzivni dizajn koji 
-omogućava da stranica bude funkcionalna i na mobilnim uređajima, 
-smanjujući veličinu elemenata kada se stranica prikazuje na manjim ekranima.
+### Kako aplikacija funkcionira:
+1. **Unos lokacija:**
+   - Korisnici mogu desnim klikom na mapu dodavati geografske točke koje predstavljaju postojeće ili planirane lokacije restorana.
+   - Svaka unesena lokacija automatski se prikazuje u tablici, gdje korisnici mogu pregledati geografske koordinate i ukloniti neželjene točke.
 
-2. Backend - Python (Flask & TomTom API):
-Flask Web Framework: Flask je korišćen za kreiranje servera koji preuzima podatke od korisnika, 
-koristi TomTom API da dobije podatke o restoranima u određenom radijusu, 
-obrađuje te podatke i vraća ih u formatu koji frontend može prikazati na mapi.
-TomTom API: API omogućava pretragu restorana i drugih objekata na osnovu geografske širine i dužine. 
-Aplikacija koristi endpoint za pretragu objekata u određenom radijusu od unesene tačke. 
-Kada korisnik unese koordinate, API poziva se za pretragu restorana.
-K-means Algoritam: Koristi se za grupisanje restorana na mapi. 
-Algoritam analizira trenutne lokacije restorana i predlaže nove lokacije (centroids) 
-na osnovu gustoće postojećih restorana. Ove lokacije označene su crvenim kružnicama na mapi, 
-što predstavlja potencijalna područja za nove restorane.
-3. Podaci i Prikazivanje na Mapi:
-Restorani: Nakon što API vrati listu restorana, svaki restoran je označen na mapi sa markerom. 
-Kada korisnik klikne na marker, pojavljuje se popup koji prikazuje ime restorana.
-Potencijalne Lokacije (Centroids): Na osnovu analize podataka o postojećim restoranima, K-means 
-algoritam generiše predložene lokacije za nove restorane (centroids). Svaka od tih lokacija je 
-prikazana kao crveni krug na mapi, što korisnicima omogućava vizualizaciju potencijalnih mjesta za novi restoran.
-4. Interaktivnost:
-Korisnici mogu učitati mapu na osnovu različitih geografskih koordinata koje unesu, 
-a mape se automatski ažuriraju sa novim podacima nakon svakog poziva API-ja.
-Ovaj interaktivni pristup omogućava korisnicima da istraže različite regije u Bosni i Hercegovini 
-i da dobiju vizualne prijedloge za nove restorane temeljem podataka iz trenutnih restoranskih lokacija.
-Zaključak:
-Projekat predstavlja dinamičan i interaktivan sistem za praćenje i analizu restoranske industrije 
-u Bosni i Hercegovini. Kombinovanjem geografske analize pomoću TomTom API-ja i machine learning tehnike K-means, 
-omogućava se korisnicima da ne samo istraže trenutne restorane, već i da dobiju preporuke za nove lokacije. 
-Pored toga, aplikacija je dizajnirana s obzirom na mobilne uređaje, što čini ovu funkcionalnost dostupnom na svim platformama.
+2. **Analiza podataka:**
+   - Kada korisnik klikne na gumb **"Predloži lokacije"**, aplikacija šalje sve unesene točke zajedno s brojem željenih klastera na backend servis.
+   - Backend koristi **K-means algoritam** za klasterizaciju unesene liste lokacija, grupirajući točke u zadani broj klastera (npr. 3 klastera za 3 optimalne lokacije).
+   - Sustav provjerava valjanost lokacija i osigurava da predloženi centri klastera (centroidi) budu jedinstveni i prostorno različiti od početnih točaka.
+   - Prije izračuna klastera, aplikacija koristi prostornu obradu s **GeoPandas** i **Shapely** bibliotekama kako bi osigurala da se unesene lokacije nalaze unutar naseljenih područja Bosne i Hercegovine, definiranih u GeoJSON datoteci.
 
-Sistem može biti koristan za različite poslovne analize, kao što su:
+3. **Prikaz rezultata:**
+   - Predložene lokacije klastera (centroidi) vraćaju se na frontend i prikazuju na mapi pomoću crvenih markera, dok su korisnički unosi prikazani plavim markerima.
+   - Korisnik može vizualno pregledati kako su predložene lokacije povezane s postojećim podacima.
 
-Planiranje novih restorana bazirano na analizi gustine postojećih restorana.
-Poboljšanje tržišne strategije pomoću geografske analize lokacija.
-Optimizacija poslovanja u industriji ugostiteljstva.
-Aplikacija takođe omogućava proširivanje na različite regione, omogućavajući korisnicima da biraju različite lokacije za analize, čime se omogućava šira primjena i skalabilnost sistema.
+4. **Reset funkcionalnost:**
+   - Gumb **"Resetiraj lokacije"** omogućuje korisnicima uklanjanje svih dodanih markera i rezultata s mape te resetiranje aplikacije na početno stanje.
+
+### Tehnološki detalji:
+- **Backend:** Flask API prihvaća JSON podatke i obrađuje ih koristeći:
+  - **GeoPandas** za prostornu analizu i spajanje podataka s geografskim područjima.
+  - **Shapely** za kreiranje geometrijskih objekata.
+  - **Scikit-learn** za implementaciju K-means algoritma.
+- **Frontend:** 
+  - **Leaflet.js** omogućuje prikaz OpenStreetMap mape i interakciju s korisnicima (dodavanje markera, prikaz rezultata).
+  - **HTML i CSS** koriste se za strukturiranje i stiliziranje sadržaja, uključujući tablicu unosa i legendu za označavanje markera.
+- **Prostorni podaci:** Aplikacija koristi GeoJSON datoteku s podacima o naseljenim područjima Bosne i Hercegovine kako bi se osigurala relevantnost prijedloga.
+
+### Svrha:
+Aplikacija je namijenjena vlasnicima restorana, planerima ili analitičarima koji žele odrediti gdje bi novi restorani bili najpogodniji, temeljem prostornog rasporeda postojećih lokacija. Pomoću klasterizacije i geografskih podataka pruža korisnicima mogućnost donošenja informiranih odluka o pozicioniranju objekata.
