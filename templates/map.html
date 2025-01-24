@@ -7,155 +7,46 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
+        /* Slični stilovi kao pre */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
-        }
-
-        h1 {
-            text-align: center;
-            margin-top: 20px;
+            background-color: #f9f9f9;
             color: #333;
         }
-
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .container {
-            width: 90%;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-
-        #map {
-            height: 600px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #f2f2f2;
-            color: #333;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .legend {
-            background-color: #fff;
-            border: 1px solid #ddd;
-            padding: 10px;
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-        }
-
-        .legend h4 {
-            margin: 0;
-            padding: 0;
-            font-size: 16px;
-        }
-
-        .legend ul {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0 0;
-        }
-
-        .legend li {
-            margin: 5px 0;
-        }
-
-        .legend .blue-pin {
-            width: 20px;
-            height: 20px;
-            background-color: blue;
-            display: inline-block;
-            margin-right: 10px;
-            border-radius: 50%;
-        }
-
-        .legend .red-pin {
-            width: 20px;
-            height: 20px;
-            background-color: red;
-            display: inline-block;
-            margin-right: 10px;
-            border-radius: 50%;
-        }
-
-        .delete-marker-btn {
-            background-color: #f44336;
-            color: white;
-            padding: 8px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #reset {
-            width: 100%;
-            padding: 12px;
-            background-color: #d30707;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+        h1 { text-align: center; margin-top: 20px; color: #2c3e50; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        select, button, input { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; margin-top: 15px; background-color: #f8f8f8; transition: background-color 0.3s; }
+        button { background-color: #3498db; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #2980b9; }
+        #map { height: 400px; border-radius: 8px; margin-top: 20px; background-color: #f4f4f4; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background-color: #3498db; color: white; }
     </style>
 </head>
 <body>
 
-    <h1>Restoran Lokator za Bosnu i Hercegovinu</h1>
+    <h1>Restoran Lokator</h1>
     <div class="container">
-        <p style="text-align: center; color: #555; font-size: 16px;">
-            Aplikacija omogućuje unos lokacija restorana na mapu. Desnim klikom na mapu dodajte lokacije koje želite označiti. 
-            Nakon toga, kliknite na "Predloži lokacije" kako biste dobili predložene nove lokacije temeljeno na klasterizaciji.
-        </p>
+        <label for="citySearch">Izaberite grad:</label>
+        <select id="citySearch">
+            <option value="">-- Izaberite grad --</option>
+            <option value="Sarajevo">Sarajevo</option>
+            <option value="Mostar">Mostar</option>
+            <option value="Banja Luka">Banja Luka</option>
+            <option value="Zenica">Zenica</option>
+            <option value="Tuzla">Tuzla</option>
+            <option value="Bihać">Bihać</option>
+            <option value="Trebinje">Trebinje</option>
+            <option value="Doboj">Doboj</option>
+        </select>
+
+        <button onclick="searchRestaurants()">Prikaz restorana</button>
 
         <div id="map"></div>
 
-        <label for="numClusters" style="display: block; margin-top: 20px; font-weight: bold;">Unesite broj željenih lokacija:</label>
-        <input type="number" id="numClusters" min="1" value="3" style="width: 100%; padding: 8px; margin-top: 10px;">
-
-        <button id="reset" onclick="resetMap()">Resetiraj lokacije</button>
         <button onclick="sendData()">Predloži lokacije</button>
 
         <h2>Odabrane lokacije</h2>
@@ -169,15 +60,6 @@
             </thead>
             <tbody></tbody>
         </table>
-
-    </div>
-
-    <div class="legend">
-        <h4>Legenda:</h4>
-        <ul>
-            <li><span class="blue-pin"></span> Oznaka lokacije (desni klik)</li>
-            <li><span class="red-pin"></span> Predložene lokacije</li>
-        </ul>
     </div>
 
     <script>
@@ -185,64 +67,50 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         var locations = [];
-        var markers = []; // List to store marker references
-        var proposedMarkers = []; // To store proposed (red) markers
+        var markers = [];
 
-        map.on('contextmenu', function(e) {
-            var marker = L.marker(e.latlng, {
-                icon: L.icon({ iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" })
-            }).addTo(map);
-            markers.push(marker);
-            locations.push({latitude: e.latlng.lat, longitude: e.latlng.lng});
-            updateLocationTable();
-        });
+        // Prikaz restorana na mapi
+        function searchRestaurants() {
+            var cityName = document.getElementById('citySearch').value;
+            fetch(`/search_restaurants?city_name=${cityName}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.restaurants) {
+                    // Očistiti mapu od starih markera
+                    markers.forEach(marker => {
+                        map.removeLayer(marker);
+                    });
 
-        function updateLocationTable() {
-            var tableBody = document.getElementById('locationsTable').getElementsByTagName('tbody')[0];
-            tableBody.innerHTML = "";
-            locations.forEach(function(location, index) {
-                var row = tableBody.insertRow();
-                var cell1 = row.insertCell(0);
-                var cell2 = row.insertCell(1);
-                var cell3 = row.insertCell(2);
-                cell1.textContent = location.latitude;
-                cell2.textContent = location.longitude;
-
-                var deleteBtn = document.createElement("button");
-                deleteBtn.textContent = "Obriši";
-                deleteBtn.className = "delete-marker-btn";
-                deleteBtn.onclick = function() { deleteMarker(index); };
-                cell3.appendChild(deleteBtn);
+                    markers = []; // Resetujte listu markera
+                    data.restaurants.forEach(restaurant => {
+                        var marker = L.marker([restaurant.latitude, restaurant.longitude]).addTo(map);
+                        markers.push(marker);
+                    });
+                } else {
+                    alert("Nema restorana u ovom gradu.");
+                }
+            })
+            .catch(error => {
+                alert(`Greška: ${error.message}`);
             });
         }
 
-        function deleteMarker(index) {
-            markers[index].remove(); // Remove marker from map
-            markers.splice(index, 1); // Remove marker from array
-            locations.splice(index, 1); // Remove location from array
-            updateLocationTable(); // Update the table
-        }
-
+        // Dodavanje novih lokacija
         function sendData() {
-            var numClusters = document.getElementById('numClusters').value;
+            var numClusters = 3;  // Broj klastera
             fetch("/process", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ locations: locations, numClusters: parseInt(numClusters) })
+                body: JSON.stringify({ locations: locations, numClusters: numClusters })
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(err.error); });
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (Array.isArray(data)) {
                     data.forEach(loc => {
                         var proposedMarker = L.marker([loc.latitude, loc.longitude], {
                             icon: L.icon({ iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" })
                         }).addTo(map);
-                        proposedMarkers.push(proposedMarker); // Save proposed markers
+                        markers.push(proposedMarker);  // Spremi predložene markere
                     });
                 } else {
                     alert("Nepoznati odgovor sa servera.");
@@ -251,24 +119,6 @@
             .catch(error => {
                 alert(`Greška: ${error.message}`);
             });
-        }
-
-        function resetMap() {
-            // Remove all markers (both blue and red)
-            markers.forEach(function(marker) {
-                map.removeLayer(marker);
-            });
-            proposedMarkers.forEach(function(marker) {
-                map.removeLayer(marker);
-            });
-
-            // Reset marker lists and locations
-            markers = [];
-            proposedMarkers = [];
-            locations = [];
-
-            // Reset the table
-            updateLocationTable();
         }
     </script>
 </body>
