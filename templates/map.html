@@ -20,6 +20,8 @@
         select, button, input { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; margin-top: 15px; background-color: #f8f8f8; transition: background-color 0.3s; }
         button { background-color: #3498db; color: white; border: none; cursor: pointer; }
         button:hover { background-color: #2980b9; }
+        #reset {background-color: #cd2812;}
+        #suggest {background-color: rgb(25, 198, 15);}
         #map { height: 400px; border-radius: 8px; margin-top: 20px; background-color: #f4f4f4; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         table, th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
@@ -42,13 +44,15 @@
             <option value="Trebinje">Trebinje</option>
             <option value="Doboj">Doboj</option>
         </select>
-
+        
         <button onclick="searchRestaurants()">Prikaz restorana</button>
 
         <div id="map"></div>
-
-        <button onclick="sendData()">Predloži lokacije</button>
-
+        
+        <label for="numClusters" style="display: block; margin-top: 20px; font-weight: bold;">Unesite broj željenih lokacija:</label>
+        <input type="number" id="numClusters" min="1" value="3" style="width: 17%; padding: 8px; margin-top: 10px;">
+        <button id="suggest" onclick="sendData()">Predloži lokacije</button>
+        <button id="reset" onclick="resetMap()">Resetiraj lokacije</button>
         <h2>Odabrane lokacije</h2>
         <table id="locationsTable">
             <thead>
@@ -58,50 +62,105 @@
                     <th>Brisanje</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+
+            </tbody>
         </table>
     </div>
 
     <script>
         var map = L.map('map').setView([43.9, 17.7], 8);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        var locations = [];
-        var markers = [];
-
+    
+        var locations = []; // Lista lokacija za slanje na server
+        var markers = [];   // Lista svih markera na mapi
+    
+        // Funkcija za prikaz lokacija u tabeli
+        function updateTable() {
+            var tableBody = document.querySelector("#locationsTable tbody");
+            tableBody.innerHTML = ""; // Očisti tabelu
+    
+            locations.forEach((location, index) => {
+                var row = `<tr>
+                    <td>${location.latitude.toFixed(6)}</td>
+                    <td>${location.longitude.toFixed(6)}</td>
+                    <td><button onclick="removeLocation(${index})">Ukloni</button></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+    
+        // Dodavanje markera na klik na mapu
+        map.on('click', function (e) {
+            var lat = e.latlng.lat;
+            var lon = e.latlng.lng;
+    
+            // Dodaj marker na mapu
+            var marker = L.marker([lat, lon]).addTo(map);
+            markers.push(marker);
+    
+            // Dodaj lokaciju u listu
+            locations.push({ latitude: lat, longitude: lon });
+    
+            // Ažuriraj tabelu
+            updateTable();
+        });
+    
+        // Uklanjanje lokacije
+        function removeLocation(index) {
+            // Ukloni marker s mape
+            map.removeLayer(markers[index]);
+            markers.splice(index, 1); // Ukloni marker iz liste
+    
+            // Ukloni lokaciju iz liste
+            locations.splice(index, 1);
+    
+            // Ažuriraj tabelu
+            updateTable();
+        }
+    
         // Prikaz restorana na mapi
         function searchRestaurants() {
             var cityName = document.getElementById('citySearch').value;
             fetch(`/search_restaurants?city_name=${cityName}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.restaurants) {
-                    // Očistiti mapu od starih markera
-                    markers.forEach(marker => {
-                        map.removeLayer(marker);
-                    });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.restaurants) {
+                        // Očisti staru mapu
+                        markers.forEach(marker => map.removeLayer(marker));
+                        markers = [];
+                        
+                        // Dodaj restorane na mapu
+                        data.restaurants.forEach(restaurant => {
+                            var marker = L.marker([restaurant.latitude, restaurant.longitude]).addTo(map);
+                            markers.push(marker);
 
-                    markers = []; // Resetujte listu markera
-                    data.restaurants.forEach(restaurant => {
-                        var marker = L.marker([restaurant.latitude, restaurant.longitude]).addTo(map);
-                        markers.push(marker);
-                    });
-                } else {
-                    alert("Nema restorana u ovom gradu.");
-                }
-            })
-            .catch(error => {
-                alert(`Greška: ${error.message}`);
-            });
+                            locations.push({
+                                latitude: restaurant.latitude,
+                                longitude: restaurant.longitude
+                            });
+                        });
+
+                        
+
+                        updateTable()
+
+                    } else {
+                        alert("Nema restorana u ovom gradu.");
+                    }
+                })
+                .catch(error => {
+                    alert(`Greška: ${error.message}`);
+                });
         }
-
-        // Dodavanje novih lokacija
+    
+        // Slanje podataka za predlaganje novih lokacija
         function sendData() {
-            var numClusters = 3;  // Broj klastera
-            fetch("/process", {
+            var numClusters = document.getElementById('numClusters').value; 
+            fetch("/process_random", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ locations: locations, numClusters: numClusters })
+                body: JSON.stringify({ locations: locations, numClusters: parseInt(numClusters) })  // 
             })
             .then(response => response.json())
             .then(data => {
@@ -110,16 +169,37 @@
                         var proposedMarker = L.marker([loc.latitude, loc.longitude], {
                             icon: L.icon({ iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png" })
                         }).addTo(map);
-                        markers.push(proposedMarker);  // Spremi predložene markere
+                        markers.push(proposedMarker);
                     });
                 } else {
-                    alert("Nepoznati odgovor sa servera.");
+                    alert(data.error || "Nepoznati odgovor sa servera.");
                 }
             })
             .catch(error => {
                 alert(`Greška: ${error.message}`);
             });
         }
+
+        function resetMap() {
+            // Remove all markers (both blue and red)
+            if (typeof markers !== "undefined") {
+                markers.forEach(function(marker) {
+                    map.removeLayer(marker); // Uklanjanje markera sa mape
+                });
+                markers = [];
+            }
+            // Reset marker lists and locations
+            locations = [];
+
+            const tableBody = document.querySelector("#locationsTable tbody");
+            if (tableBody) {
+                tableBody.innerHTML = ""; // Clear all rows from the table
+            }
+
+            // Reset the table
+            updateTable();
+        }
     </script>
+    
 </body>
 </html>
