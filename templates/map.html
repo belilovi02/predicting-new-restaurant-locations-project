@@ -49,8 +49,18 @@
 
         <div id="map"></div>
         
-        <label for="numClusters" style="display: block; margin-top: 20px; font-weight: bold;">Unesite broj željenih lokacija:</label>
-        <input type="number" id="numClusters" min="1" value="3" style="width: 17%; padding: 8px; margin-top: 10px;">
+        <label for="methodSelect">Izaberite metodu predikcije:</label>
+        <select id="methodSelect" onchange="toggleNumClusters()">
+            <option value="process_random">Random (KMeans)</option>
+            <option value="process_dbscan">DBSCAN Klasterisanje</option>
+            <option value="process">KMeans++ Težinsko Klasterisanje</option>
+        </select>
+
+        <div id="numClustersContainer">
+            <label for="numClusters" style="display: block; margin-top: 20px; font-weight: bold;">Unesite broj željenih lokacija:</label>
+            <input type="number" id="numClusters" min="1" value="3" style="width: 17%; padding: 8px; margin-top: 10px;">
+        </div>
+        
         <button id="suggest" onclick="sendData()">Predloži lokacije</button>
         <button id="reset" onclick="resetMap()">Resetiraj lokacije</button>
         <h2>Odabrane lokacije</h2>
@@ -69,6 +79,9 @@
     </div>
 
     <script>
+
+        // Pozovi toggleNumClusters() na učitavanju stranice da sakrije broj klastera ako je DBSCAN inicijalno odabran
+        document.addEventListener("DOMContentLoaded", toggleNumClusters);
         var map = L.map('map').setView([43.9, 17.7], 8);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     
@@ -153,11 +166,30 @@
                     alert(`Greška: ${error.message}`);
                 });
         }
-    
+        
+        function toggleNumClusters() {
+            var selectedMethod = document.getElementById('methodSelect').value;
+            var numClustersContainer = document.getElementById('numClustersContainer');
+
+            // Sakrij broj klastera za DBSCAN, prikaži za ostale
+            if (selectedMethod === "process_dbscan") {
+                numClustersContainer.style.display = "none";
+            } else {
+                numClustersContainer.style.display = "block";
+            }
+        }
+
         // Slanje podataka za predlaganje novih lokacija
         function sendData() {
+            var method = document.getElementById('methodSelect').value;
             var numClusters = document.getElementById('numClusters').value; 
-            fetch("/process_random", {
+
+            var requestBody = { locations: locations };
+            if(method !== "process_dbscan"){
+                requestBody.numClusters = parseInt(numClusters);
+            }
+
+            fetch(`/${method}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ locations: locations, numClusters: parseInt(numClusters) })  // 

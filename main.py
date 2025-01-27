@@ -11,6 +11,9 @@ import random
 from sklearn.metrics import pairwise_distances_argmin_min
 import numpy as np
 from sklearn.cluster import DBSCAN
+import os
+
+os.environ["OMP_NUM_THREADS"] = "1"
 
 app = Flask(__name__)
 
@@ -242,6 +245,8 @@ def process_data_random():
     return jsonify(proposed_locations)
 
 # Endpoint za analizu podataka (KMeans) - III način
+cache = {}
+
 @app.route("/process", methods=["POST"])
 def process_data():
     data = request.json
@@ -272,6 +277,9 @@ def process_data():
     # Dodavanje težinskih faktora (simulirana gustoća populacije)
     def get_population_density(lat, lon):
         try:
+            headers = {
+                "User-agent": "RestoranLokator/1.0 (delic.amer.21@size.ba)"
+            }
             response = requests.get(
                 "https://nominatim.openstreetmap.org/reverse",
                 params={
@@ -280,6 +288,7 @@ def process_data():
                     "format": "json",
                     "addressdetails": 1
                 },
+                headers = headers,
                 timeout=5
             )
             
