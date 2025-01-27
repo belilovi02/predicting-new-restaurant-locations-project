@@ -26,6 +26,51 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         table, th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
         th { background-color: #3498db; color: white; }
+        .legend {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .legend h4 {
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+        }
+
+        .legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0;
+        }
+
+        .legend li {
+            margin: 5px 0;
+        }
+
+        .legend .blue-pin {
+            width: 20px;
+            height: 20px;
+            background-color: blue;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+
+        .legend .red-pin {
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            display: inline-block;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
@@ -76,6 +121,14 @@
 
             </tbody>
         </table>
+    </div>
+
+    <div class="legend">
+        <h4>Legenda:</h4>
+        <ul>
+            <li><span class="blue-pin"></span> Oznaka lokacije (desni klik)</li>
+            <li><span class="red-pin"></span> Predložene lokacije</li>
+        </ul>
     </div>
 
     <script>
